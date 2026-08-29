@@ -4,12 +4,19 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (for example: v1.8.0-personal.1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
 jobs:
   create-release:
@@ -18,14 +25,25 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Validate release tag
+        shell: bash
+        run: |
+          if [[ ! "${RELEASE_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            --draft \
-            --title "${GITHUB_REF_NAME}" \
-            --generate-notes
+          if ! gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release create "${RELEASE_TAG}" \
+              --draft \
+              --target "${GITHUB_SHA}" \
+              --title "${RELEASE_TAG}" \
+              --generate-notes
+          fi
 
   release-darwin:
     name: Build & upload macOS artifacts
@@ -63,7 +81,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF_NAME}" \
+          gh release upload "${RELEASE_TAG}" \
             build/bin/gomander-darwin-amd64.dmg \
             build/bin/gomander-darwin-arm64.dmg \
             build/bin/gomander-darwin-amd64.app.zip \
@@ -120,7 +138,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF_NAME}" \
+          gh release upload "${RELEASE_TAG}" \
             build/bin/gomander-windows-amd64-portable.exe \
             build/bin/gomander-windows-arm64-portable.exe \
             build/bin/gomander-windows-amd64-installer.exe \
@@ -181,13 +199,13 @@ jobs:
           bash scripts/create-deb.sh \
             build/bin/gomander-linux-${{ matrix.arch }} \
             ${{ matrix.arch }} \
-            "${GITHUB_REF_NAME#v}"
+            "${RELEASE_TAG#v}"
 
       - name: Upload Linux ${{ matrix.arch }} artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF_NAME}" \
+          gh release upload "${RELEASE_TAG}" \
             build/bin/gomander-linux-${{ matrix.arch }} \
-            build/bin/gomander_${GITHUB_REF_NAME#v}_${{ matrix.arch }}.deb \
+            build/bin/gomander_${RELEASE_TAG#v}_${{ matrix.arch }}.deb \
             --clobber
