@@ -56,8 +56,11 @@ var localeFs embed.FS
 func main() {
 	appConfig := applicationConfig{
 		configFolderName: "gomander",
-		// ConPTY remains opt-in until its Windows 10 behavior can run in CI.
-		runner: runner.Config{},
+		runner: runner.Config{
+			ConPTYEnvironments: []runner.HostEnvironment{
+				runner.HostEnvironmentWindows10,
+			},
+		},
 	}
 
 	// The app can only be built once Wails hands us its context, so OnStartup fills this in
