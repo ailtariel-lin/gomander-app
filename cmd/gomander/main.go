@@ -60,6 +60,7 @@ func main() {
 		runner: runner.Config{
 			ConPTYEnvironments: []runner.HostEnvironment{
 				runner.HostEnvironmentWindows10,
+				runner.HostEnvironmentWindows11,
 			},
 		},
 	}

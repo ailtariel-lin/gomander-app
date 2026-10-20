@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -30,6 +31,9 @@ var (
 	conPTYClearScreen = []byte("\x1b[2J")
 	conPTYCursorHome  = []byte("\x1b[H")
 	conPTYCursorShown = []byte("\x1b[?25h")
+	// Windows 11's console host paints an empty viewport before returning home
+	// and emitting the command title. Those rows are not command output.
+	conPTYViewportInitialization = []byte("\x1b[?9001h\x1b[?1004h\x1b[?25l\x1b[2J\x1b[m\x1b[H\r\n")
 )
 
 type conPTYOutput struct {
@@ -38,6 +42,7 @@ type conPTYOutput struct {
 	pending     *bytes.Reader
 	pendingErr  error
 	initialized bool
+	padding     bool
 }
 
 func (o *conPTYOutput) Read(buffer []byte) (int, error) {
@@ -53,13 +58,25 @@ func (o *conPTYOutput) Read(buffer []byte) (int, error) {
 
 		line, err := o.reader.ReadBytes('\n')
 		if !o.initialized {
+			o.initialized = true
+			if bytes.Equal(line, conPTYViewportInitialization) {
+				o.padding = true
+				continue
+			}
 			// ConPTY initializes its screen before command output. Gomander has
 			// already rendered the command header, so preserve that existing UI.
 			if bytes.Contains(line, conPTYClearScreen) && bytes.Contains(line, conPTYCursorHome) {
 				line = bytes.Replace(line, conPTYClearScreen, nil, 1)
 				line = bytes.Replace(line, conPTYCursorHome, nil, 1)
 			}
-			o.initialized = true
+		}
+
+		if o.padding {
+			if bytes.Equal(line, []byte("\r\n")) {
+				continue
+			}
+			o.padding = false
+			line = bytes.TrimPrefix(line, conPTYCursorHome)
 		}
 
 		if isConPTYHostOnlyLine(line) {
@@ -173,10 +190,13 @@ func currentWindowsHostEnvironment() HostEnvironment {
 func classifyWindowsVersion(majorVersion, buildNumber uint32, productType byte) HostEnvironment {
 	// Product type 1 is VER_NT_WORKSTATION. Server releases can share Windows
 	// 10's major version and build range but are outside the validated scope.
-	if majorVersion == 10 &&
-		buildNumber >= windows10MinBuild &&
-		buildNumber < windows11MinBuild &&
-		productType == windowsProductWorkstation {
+	if majorVersion != 10 || productType != windowsProductWorkstation {
+		return ""
+	}
+	if buildNumber >= windows11MinBuild {
+		return HostEnvironmentWindows11
+	}
+	if buildNumber >= windows10MinBuild {
 		return HostEnvironmentWindows10
 	}
 	return ""
@@ -227,5 +247,9 @@ func forceKill(pid string, exited <-chan struct{}) error {
 func runTaskkill(arguments ...string) error {
 	cmd := exec.Command("taskkill", arguments...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("taskkill %s: %w: %s", strings.Join(arguments, " "), err, strings.TrimSpace(string(output)))
+	}
+	return nil
 }

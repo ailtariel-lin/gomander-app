@@ -27,7 +27,17 @@ Windows verification must cover terminal output, reload, startup failure, stoppi
 ## Status
 
 - Phase 1: complete. All upstream commits merged; one textual conflict resolved. Frontend: 63 files / 312 tests pass, TypeScript and production build pass, Biome checks 250 files successfully. Fork runner and clipboard implementations remain intact. `go test ./... -count=1 -timeout=180s`, `go vet ./...`, and module verification pass. Generated Wails bindings retain upstream's whitespace convention.
-- Phase 2: not started.
+- Phase 2: Windows 11 classification and the personal-build allowlist are implemented. Native Windows 11 tests confirm ConPTY output, failure exit status, process-tree shutdown, port release, and repeated stop. Windows Server/domain-controller exclusions and the existing Windows 10 allowlist remain covered.
+
+## Windows 11 findings and verification
+
+- Windows 11 build 26200 emits a distinct initial console header followed by 999 empty viewport rows and a cursor-home sequence. The output adapter now filters this captured host initialization while retaining command output and subsequent blank lines. Windows 10 initialization filtering is unchanged.
+- Failed `taskkill` calls now include their native output and arguments, preserving the original exit error for `errors.As`. The original user-reported `128` was not reproduced; no unverified shutdown algorithm replacement was made.
+- An isolated harness used the production `DefaultRunner` and the existing project's `uv`/Uvicorn environment, serving only a temporary ASGI application on temporary ports. Three reloads passed both with and without HTTP keep-alive. An intentional startup failure also passed stop, `ProcessFinished`, empty running-command state, and port-rebind checks. Temporary diagnostic source and applications were removed.
+- Windows 11 targeted tests and the smoke scenarios pass. Final `go test ./... -count=1 -timeout=180s` passes. Linux amd64 and Windows arm64 runner tests cross-compile successfully. The Wails 2.10.2 production build generated `build/bin/gomander-v1.10.0-win11-amd64.exe`; generated bindings and module files stayed unchanged.
+- The packaged desktop executable starts and exposes `/discovery` successfully with isolated `APPDATA`, `LOCALAPPDATA`, and WebView2 storage. It creates its own diagnostic database. The hidden smoke instance was terminated after verification; the user's existing instance and database were not replaced.
+- Final `go vet ./...`, `gofmt`, and diff checks pass. Both phases are ready for fork synchronization.
+- Windows 10 runtime execution is unavailable on this Windows 11 host; preserved code paths and classification tests are checked locally. Linux/macOS runtime tests and race-detector execution (no C compiler installed) are not claimed.
 
 ## Local verification environment
 

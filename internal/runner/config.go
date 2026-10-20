@@ -6,6 +6,7 @@ type HostEnvironment string
 
 const (
 	HostEnvironmentWindows10 HostEnvironment = "windows10"
+	HostEnvironmentWindows11 HostEnvironment = "windows11"
 )
 
 // Config controls compatibility-sensitive runner behavior.
