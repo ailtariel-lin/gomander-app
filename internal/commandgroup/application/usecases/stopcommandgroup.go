@@ -26,8 +26,8 @@ func (uc *StopCommandGroup) Execute(commandGroupId string) error {
 		return err
 	}
 
-	for _, command := range cmdGroup.Commands {
-		if err := uc.commandRunner.StopRunningCommand(command.Id); err != nil {
+	for _, commandId := range cmdGroup.CommandIds {
+		if err := uc.commandRunner.StopRunningCommand(commandId); err != nil {
 			return err
 		}
 	}

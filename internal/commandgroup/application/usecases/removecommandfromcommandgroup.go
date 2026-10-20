@@ -3,7 +3,6 @@ package usecases
 import (
 	"errors"
 
-	commanddomain "gomander/internal/command/domain"
 	"gomander/internal/commandgroup/domain"
 	"gomander/internal/helpers/array"
 )
@@ -23,12 +22,12 @@ func (uc *RemoveCommandFromCommandGroup) Execute(commandId, commandGroupId strin
 	if err != nil {
 		return err
 	}
-	if len(commandGroup.Commands) == 1 {
+	if len(commandGroup.CommandIds) == 1 {
 		return errors.New("cannot remove the last command from the group; delete the group instead")
 	}
 
-	commandGroup.Commands = array.Filter(commandGroup.Commands, func(cmd commanddomain.Command) bool {
-		return cmd.Id != commandId
+	commandGroup.CommandIds = array.Filter(commandGroup.CommandIds, func(heldCommandId string) bool {
+		return heldCommandId != commandId
 	})
 
 	return uc.commandGroupRepository.Update(&commandGroup)

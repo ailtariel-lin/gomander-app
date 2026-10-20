@@ -4,13 +4,17 @@ import { useTranslation } from "react-i18next";
 
 import { BaseWorkingDirectoryField } from "@/components/modals/Project/common/BaseWorkingDirectoryField.tsx";
 import {
+	keepSelectableGroups,
+	narrowBlueprint,
+} from "@/components/modals/Project/common/blueprintSelection.ts";
+import {
 	type FormSchemaType,
 	formSchema,
 } from "@/components/modals/Project/common/importAndExportSchema.ts";
 import { ProjectCommandGroupsField } from "@/components/modals/Project/common/ProjectCommandGroupsField.tsx";
 import { ProjectCommandsField } from "@/components/modals/Project/common/ProjectCommandsField.tsx";
 import { ProjectNameField } from "@/components/modals/Project/common/ProjectNameField.tsx";
-import type { ProjectExport } from "@/contracts/types.ts";
+import type { ProjectBlueprint } from "@/contracts/types.ts";
 import {
 	Accordion,
 	AccordionContent,
@@ -35,7 +39,7 @@ export const ImportProjectModal = ({
 }: {
 	open: boolean;
 	onClose: () => void;
-	project: ProjectExport | null;
+	project: ProjectBlueprint | null;
 }) => {
 	const { t } = useTranslation();
 	const form = useForm<FormSchemaType>({
@@ -60,16 +64,8 @@ export const ImportProjectModal = ({
 			return;
 		}
 
-		const projectWithSelectedCommandsAndCommandGroups: ProjectExport = {
-			...project,
-			commands: project.commands.filter((c) => values.commands.includes(c.id)),
-			commandGroups: project.commandGroups.filter((cg) =>
-				values.commandGroups.includes(cg.id),
-			),
-		};
-
 		const imported = await importProject(
-			projectWithSelectedCommandsAndCommandGroups,
+			narrowBlueprint(project, values.commands, values.commandGroups),
 			values.name,
 			values.baseWorkingDirectory,
 		);
@@ -83,17 +79,18 @@ export const ImportProjectModal = ({
 	const commandIdsWatcher = form.watch("commands");
 
 	const handleCommandIdsChange = (selectedCommandIds: string[]) => {
-		const currentCommandGroups = form.getValues("commandGroups");
+		if (!project) {
+			return;
+		}
 
-		const updatedCommandGroups = currentCommandGroups.filter((groupId) => {
-			const group = project?.commandGroups.find((cg) => cg.id === groupId);
-			// Keep the group checked only if at least one of its commands is selected
-			return group?.commandIds.some((commandId) =>
-				selectedCommandIds.includes(commandId),
-			);
-		});
-
-		form.setValue("commandGroups", updatedCommandGroups);
+		form.setValue(
+			"commandGroups",
+			keepSelectableGroups(
+				project,
+				form.getValues("commandGroups"),
+				selectedCommandIds,
+			),
+		);
 	};
 
 	return (

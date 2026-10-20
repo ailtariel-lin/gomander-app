@@ -1,8 +1,9 @@
 import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
+import { isGroupSelectable } from "@/components/modals/Project/common/blueprintSelection.ts";
 import type { FormSchemaType } from "@/components/modals/Project/common/importAndExportSchema.ts";
-import type { ProjectExport } from "@/contracts/types.ts";
+import type { ProjectBlueprint } from "@/contracts/types.ts";
 import { Checkbox } from "@/design-system/components/ui/checkbox.tsx";
 import {
 	FormControl,
@@ -21,9 +22,9 @@ export const ProjectCommandGroupsField = ({
 	selectedCommandIds,
 	commands,
 }: {
-	commandGroups: ProjectExport["commandGroups"];
+	commandGroups: ProjectBlueprint["commandGroups"];
 	selectedCommandIds: string[];
-	commands: ProjectExport["commands"];
+	commands: ProjectBlueprint["commands"];
 }) => {
 	const { t } = useTranslation();
 	const form = useFormContext<FormSchemaType>();
@@ -41,8 +42,9 @@ export const ProjectCommandGroupsField = ({
 							control={form.control}
 							name="commandGroups"
 							render={({ field }) => {
-								const disabled = !commandGroup.commandIds.some((id) =>
-									selectedCommandIds.includes(id),
+								const disabled = !isGroupSelectable(
+									commandGroup,
+									selectedCommandIds,
 								);
 
 								return (

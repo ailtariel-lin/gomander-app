@@ -72,8 +72,8 @@ type Harness struct {
 //
 // The graph below mirrors buildDeps in cmd/gomander/main.go, which is where the
 // app wires the same pieces together. The localization use cases are the one
-// omission: they read the locale files embedded in the desktop binary, and no
-// backend behaviour depends on them.
+// omission: they answer from the locale files embedded in the desktop binary,
+// and no backend behaviour depends on them.
 func New(t *testing.T) *Harness {
 	t.Helper()
 
@@ -117,8 +117,8 @@ func New(t *testing.T) *Harness {
 	openedProject := openedproject.NewOpenedProject(configRepo, projectRepo)
 
 	app := internalapp.NewApp(l, processRunner, configRepo, eventBus, internalapp.EventHandlers{
-		CleanCommandGroupsOnCommandDeleted:   commandgrouphandlers.NewCleanCommandGroupsOnCommandDeleted(commandGroupRepo, ee),
-		CleanCommandGroupsOnProjectDeleted:   commandgrouphandlers.NewCleanCommandGroupsOnProjectDeleted(commandGroupRepo, ee),
+		CleanCommandGroupsOnCommandDeleted:   commandgrouphandlers.NewCleanCommandGroupsOnCommandDeleted(unitOfWork, commandGroupRepo, ee),
+		CleanCommandGroupsOnProjectDeleted:   commandgrouphandlers.NewCleanCommandGroupsOnProjectDeleted(unitOfWork, ee),
 		CleanCommandsOnProjectDeleted:        commandhandlers.NewCleanCommandOnProjectDeleted(commandRepo),
 		AddCommandToGroupOnCommandDuplicated: commandgrouphandlers.NewAddCommandToGroupOnCommandDuplicated(commandRepo, commandGroupRepo),
 	})
@@ -153,7 +153,7 @@ func New(t *testing.T) *Harness {
 			DeleteCommandGroup:            commandgroupusecases.NewDeleteCommandGroup(commandGroupRepo, ee),
 			RemoveCommandFromCommandGroup: commandgroupusecases.NewRemoveCommandFromCommandGroup(commandGroupRepo),
 			ReorderCommandGroups:          commandgroupusecases.NewReorderCommandGroups(openedProject, commandGroupRepo),
-			RunCommandGroup:               commandgroupusecases.NewRunCommandGroup(openedProject, commandGroupRepo, processRunner),
+			RunCommandGroup:               commandgroupusecases.NewRunCommandGroup(openedProject, commandGroupRepo, commandRepo, processRunner),
 			StopCommandGroup:              commandgroupusecases.NewStopCommandGroup(commandGroupRepo, processRunner),
 
 			GetCommands:          commandusecases.NewGetCommands(openedProject, commandRepo),

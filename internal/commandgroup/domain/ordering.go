@@ -29,11 +29,11 @@ var CommandOrder = ordering.NewList(
 // the order the Group holds them, each one placed behind the last. Storage
 // writes these Positions rather than deciding any of its own.
 func (commandGroup CommandGroup) CommandPlacements() []CommandPlacement {
-	placements := make([]CommandPlacement, 0, len(commandGroup.Commands))
+	placements := make([]CommandPlacement, 0, len(commandGroup.CommandIds))
 
-	for _, command := range commandGroup.Commands {
+	for _, commandId := range commandGroup.CommandIds {
 		placements = append(placements, CommandPlacement{
-			CommandId: command.Id,
+			CommandId: commandId,
 			Position:  CommandOrder.End(placements),
 		})
 	}

@@ -10,12 +10,23 @@ export namespace domain {
 	    link: string;
 	    errorPatterns: string[];
 	}
+	export interface CommandBlueprint {
+	    id: string;
+	    name: string;
+	    command: string;
+	    workingDirectory: string;
+	}
 	export interface CommandGroup {
 	    id: string;
 	    projectId: string;
 	    name: string;
-	    commands: Command[];
+	    commandIds: string[];
 	    position: number;
+	}
+	export interface CommandGroupBlueprint {
+	    id: string;
+	    name: string;
+	    commandIds: string[];
 	}
 	export interface EnvironmentPath {
 	    id: string;
@@ -26,6 +37,34 @@ export namespace domain {
 	    environmentPaths: EnvironmentPath[];
 	    locale: string;
 	}
+	
+	export interface Project {
+	    id: string;
+	    name: string;
+	    workingDirectory: string;
+	}
+	export interface ProjectBlueprint {
+	    name: string;
+	    workingDirectory: string;
+	    commands: CommandBlueprint[];
+	    commandGroups: CommandGroupBlueprint[];
+	}
+
+}
+
+export namespace event {
+	
+	export enum Event {
+	    PROCESS_FINISHED = "process_finished",
+	    PROCESS_STARTED = "process_started",
+	    NEW_LOG_ENTRY = "new_log_entry",
+	    COMMAND_GROUP_DELETED = "command_group_deleted",
+	    COMMAND_ERROR_DETECTED = "command_error_detected",
+	}
+
+}
+
+export namespace localization {
 	
 	export interface Localization {
 	    "common.cancel": string;
@@ -43,8 +82,13 @@ export namespace domain {
 	    "sidebar.commands.title": string;
 	    "sidebar.commands.add": string;
 	    "sidebar.commands.removeFromGroup": string;
+	    "sidebar.commands.run": string;
+	    "sidebar.commands.stop": string;
+	    "sidebar.commands.openLink": string;
 	    "sidebar.commandGroups.title": string;
 	    "sidebar.commandGroups.add": string;
+	    "sidebar.commandGroups.run": string;
+	    "sidebar.commandGroups.stop": string;
 	    "sidebar.commandGroups.applyReorder": string;
 	    "sidebar.commandGroups.startReorder": string;
 	    "sidebar.create.title": string;
@@ -58,12 +102,22 @@ export namespace domain {
 	    "sidebar.runningIndicator.idle": string;
 	    "sidebar.runningIndicator.running_one": string;
 	    "sidebar.runningIndicator.running_other": string;
+	    "actionPalette.title": string;
+	    "actionPalette.description": string;
+	    "actionPalette.placeholder": string;
+	    "actionPalette.empty": string;
+	    "actionPalette.sections.commands": string;
+	    "actionPalette.kinds.command": string;
+	    "actionPalette.kinds.commandGroup": string;
+	    "actionPalette.run": string;
+	    "actionPalette.stop": string;
 	    "projectSelection.openTitle": string;
 	    "projectSelection.welcome": string;
 	    "projectSelection.emptyState": string;
 	    "projectSelection.createButton": string;
 	    "projectSelection.importButton": string;
 	    "projectSelection.moreOptions": string;
+	    "projectSelection.projectOptions": string;
 	    "projectSelection.importPackageJson": string;
 	    "projectSelection.exportAction": string;
 	    "logs.matches_one": string;
@@ -117,6 +171,8 @@ export namespace domain {
 	    "commandGroupForm.nameLabel": string;
 	    "commandGroupForm.commandsDescription": string;
 	    "commandGroupForm.availableCommands": string;
+	    "commandGroupForm.addCommand": string;
+	    "commandGroupForm.removeCommand": string;
 	    "commandGroupForm.groupCommands": string;
 	    "commandGroupForm.emptyAvailable": string;
 	    "commandGroupForm.emptyGroup": string;
@@ -174,6 +230,8 @@ export namespace domain {
 	    "toast.commandGroup.notFound": string;
 	    "toast.commandGroup.cannotRemoveLast": string;
 	    "toast.project.selectFailed": string;
+	    "toast.project.createSuccess": string;
+	    "toast.project.createFailed": string;
 	    "toast.project.importSuccess": string;
 	    "toast.project.importFailed": string;
 	    "toast.project.exportSuccess": string;
@@ -199,45 +257,6 @@ export namespace domain {
 	    "modal.missingPath.howToStep2": string;
 	    "modal.missingPath.commandPlaceholder": string;
 	    "modal.missingPath.goToSettings": string;
-	}
-	export interface Project {
-	    id: string;
-	    name: string;
-	    workingDirectory: string;
-	}
-
-}
-
-export namespace event {
-	
-	export enum Event {
-	    PROCESS_FINISHED = "process_finished",
-	    PROCESS_STARTED = "process_started",
-	    NEW_LOG_ENTRY = "new_log_entry",
-	    COMMAND_GROUP_DELETED = "command_group_deleted",
-	    COMMAND_ERROR_DETECTED = "command_error_detected",
-	}
-
-}
-
-export namespace main {
-	
-	export interface CommandBlueprint {
-	    id: string;
-	    name: string;
-	    command: string;
-	    workingDirectory: string;
-	}
-	export interface CommandGroupBlueprint {
-	    id: string;
-	    name: string;
-	    commandIds: string[];
-	}
-	export interface ProjectBlueprint {
-	    name: string;
-	    workingDirectory: string;
-	    commands: CommandBlueprint[];
-	    commandGroups: CommandGroupBlueprint[];
 	}
 
 }

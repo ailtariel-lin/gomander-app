@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,14 +62,14 @@ func TestCommand(t *testing.T) {
 
 func TestCommandGroup(t *testing.T) {
 	commandGroup := commandgroupdomain.CommandGroup{
-		Id:        "group-id",
-		ProjectId: "project-id",
-		Name:      "group-name",
-		Commands:  []commanddomain.Command{command},
-		Position:  2,
+		Id:         "group-id",
+		ProjectId:  "project-id",
+		Name:       "group-name",
+		CommandIds: []string{command.Id},
+		Position:   2,
 	}
 
-	t.Run("Should reach the frontend under the field names it already receives", func(t *testing.T) {
+	t.Run("Should reach the frontend naming the commands the group holds", func(t *testing.T) {
 		// Act
 		encoded, err := json.Marshal(transport.FromCommandGroup(commandGroup))
 
@@ -78,7 +79,7 @@ func TestCommandGroup(t *testing.T) {
 			"id": "group-id",
 			"projectId": "project-id",
 			"name": "group-name",
-			"commands": [`+commandJSON+`],
+			"commandIds": ["command-id"],
 			"position": 2
 		}`, string(encoded))
 	})
@@ -184,19 +185,22 @@ func TestAbsence(t *testing.T) {
 	})
 }
 
-// assertMirrors catches a field the source carries and the DTO does not, which
+// assertMirrors catches a field the entity carries and the DTO does not, which
 // the compiler cannot: a keyed struct literal stays valid when a field is added
-// to the type it builds, so the mapping would drop it silently. Comparing the
-// two serialized forms only works while both sides still carry the same tags —
-// the change that takes the tags off the entities retires this check, and the
-// literals above become the only pin the wire needs.
-func assertMirrors(t *testing.T, source, dto any) {
+// to the type it builds, so the mapping would drop the new one silently. It
+// compares field names rather than the two serialized forms, because only the
+// DTO carries serialization tags now.
+func assertMirrors(t *testing.T, entity, dto any) {
 	t.Helper()
 
-	sourceJSON, err := json.Marshal(source)
-	require.NoError(t, err)
-	dtoJSON, err := json.Marshal(dto)
-	require.NoError(t, err)
+	assert.Equal(t, fieldNames(entity), fieldNames(dto))
+}
 
-	assert.JSONEq(t, string(sourceJSON), string(dtoJSON))
+func fieldNames(value any) []string {
+	structType := reflect.TypeOf(value)
+	names := make([]string, 0, structType.NumField())
+	for i := range structType.NumField() {
+		names = append(names, structType.Field(i).Name)
+	}
+	return names
 }

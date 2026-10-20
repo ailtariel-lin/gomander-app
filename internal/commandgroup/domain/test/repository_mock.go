@@ -17,28 +17,18 @@ func (m *MockCommandGroupRepository) Get(id string) (commandgroupdomain.CommandG
 
 func (m *MockCommandGroupRepository) GetAll(projectId string) ([]commandgroupdomain.CommandGroup, error) {
 	args := m.Called(projectId)
-	return args.Get(0).([]commandgroupdomain.CommandGroup), args.Error(1)
-}
-
-func (m *MockCommandGroupRepository) GetWithCommandIds(id string) (commandgroupdomain.CommandGroupWithCommandIds, error) {
-	args := m.Called(id)
-	return args.Get(0).(commandgroupdomain.CommandGroupWithCommandIds), args.Error(1)
-}
-
-func (m *MockCommandGroupRepository) GetAllWithCommandIds(projectId string) ([]commandgroupdomain.CommandGroupWithCommandIds, error) {
-	args := m.Called(projectId)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]commandgroupdomain.CommandGroupWithCommandIds), args.Error(1)
+	return args.Get(0).([]commandgroupdomain.CommandGroup), args.Error(1)
 }
 
-func (m *MockCommandGroupRepository) GetAllContainingWithCommandIds(commandId string) ([]commandgroupdomain.CommandGroupWithCommandIds, error) {
+func (m *MockCommandGroupRepository) GetAllContaining(commandId string) ([]commandgroupdomain.CommandGroup, error) {
 	args := m.Called(commandId)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]commandgroupdomain.CommandGroupWithCommandIds), args.Error(1)
+	return args.Get(0).([]commandgroupdomain.CommandGroup), args.Error(1)
 }
 
 func (m *MockCommandGroupRepository) Create(commandGroup *commandgroupdomain.CommandGroup) error {
@@ -54,18 +44,4 @@ func (m *MockCommandGroupRepository) Update(commandGroup *commandgroupdomain.Com
 func (m *MockCommandGroupRepository) Delete(commandGroupId string) error {
 	args := m.Called(commandGroupId)
 	return args.Error(0)
-}
-
-func (m *MockCommandGroupRepository) GetAllContaining(commandId string) ([]commandgroupdomain.CommandGroup, error) {
-	args := m.Called(commandId)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]commandgroupdomain.CommandGroup), args.Error(1)
-}
-
-// Atomically runs change against this same mock: the transaction is the real
-// repository's business, and a test that stubs one is testing GORM.
-func (m *MockCommandGroupRepository) Atomically(change func(commandgroupdomain.Repository) error) error {
-	return change(m)
 }

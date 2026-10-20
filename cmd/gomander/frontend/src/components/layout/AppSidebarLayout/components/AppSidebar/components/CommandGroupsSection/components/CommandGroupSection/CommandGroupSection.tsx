@@ -5,7 +5,7 @@ import type { SyntheticEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { CommandMenuItem } from "@/components/layout/AppSidebarLayout/components/AppSidebar/components/CommandMenuItem/CommandMenuItem.tsx";
-import type { Command, CommandGroup } from "@/contracts/types.ts";
+import type { CommandGroup } from "@/contracts/types.ts";
 import {
 	ContextMenu,
 	ContextMenuContent,
@@ -20,6 +20,7 @@ import {
 	SidebarMenuItem,
 } from "@/design-system/components/ui/sidebar.tsx";
 import { cn } from "@/design-system/lib/utils.ts";
+import { resolveCommands } from "@/helpers/commandHelpers.ts";
 import { useCommandStore } from "@/store/commandStore.ts";
 import { useSidebarSection } from "@/store/sidebarSections.ts";
 import { CommandStatus } from "@/types/CommandStatus.ts";
@@ -38,6 +39,9 @@ export const CommandGroupSection = ({
 }) => {
 	const { t } = useTranslation();
 	const commandsStatus = useCommandStore((state) => state.commandsStatus);
+	const commands = useCommandStore((state) => state.commands);
+
+	const commandsHeld = resolveCommands(commandGroup.commandIds, commands);
 
 	const [sectionOpen, setSectionOpen] = useSidebarSection(commandGroup.id);
 
@@ -51,14 +55,14 @@ export const CommandGroupSection = ({
 		transition,
 	};
 
-	const numberOfCommandsRunning = commandGroup.commands.filter(
-		(command: Command) => commandsStatus[command.id] === CommandStatus.RUNNING,
+	const numberOfCommandsRunning = commandsHeld.filter(
+		(command) => commandsStatus[command.id] === CommandStatus.RUNNING,
 	).length;
 
 	const someCommandIsRunning = numberOfCommandsRunning > 0;
 
-	const someCommandIsIdle = commandGroup.commands.some(
-		(command: Command) => commandsStatus[command.id] === CommandStatus.IDLE,
+	const someCommandIsIdle = commandsHeld.some(
+		(command) => commandsStatus[command.id] === CommandStatus.IDLE,
 	);
 
 	const run = async (e: SyntheticEvent) => {
@@ -131,11 +135,13 @@ export const CommandGroupSection = ({
 								<div className="flex gap-2 items-center shrink-0">
 									{someCommandIsRunning && (
 										<span className="whitespace-nowrap">
-											({numberOfCommandsRunning}/{commandGroup.commands.length})
+											({numberOfCommandsRunning}/{commandsHeld.length})
 										</span>
 									)}
 									{someCommandIsIdle && (
 										<Play
+											role="button"
+											aria-label={t("sidebar.commandGroups.run")}
 											size={16}
 											className="text-muted-foreground cursor-pointer hover:text-primary"
 											onClick={run}
@@ -144,6 +150,8 @@ export const CommandGroupSection = ({
 									{someCommandIsRunning && (
 										<div className="group/command p-0 m-0">
 											<Square
+												role="button"
+												aria-label={t("sidebar.commandGroups.stop")}
 												size={16}
 												className="text-muted-foreground cursor-pointer hover:text-primary"
 												onClick={stop}
@@ -167,7 +175,7 @@ export const CommandGroupSection = ({
 			{isOpen && (
 				<SidebarGroupContent>
 					<SidebarMenu>
-						{commandGroup.commands.map((command) => (
+						{commandsHeld.map((command) => (
 							<SidebarMenuItem key={command.id}>
 								<CommandMenuItem
 									command={command}

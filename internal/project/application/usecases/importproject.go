@@ -57,7 +57,7 @@ func (uc *ImportProject) Execute(blueprint projectdomain.Blueprint, name, workin
 
 		for _, cmdId := range group.CommandIds {
 			if command, exists := commandsByBlueprintId[cmdId]; exists {
-				newGroup.Commands = append(newGroup.Commands, command)
+				newGroup.CommandIds = append(newGroup.CommandIds, command.Id)
 			}
 		}
 

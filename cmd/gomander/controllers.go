@@ -2,7 +2,7 @@ package main
 
 import (
 	transport "gomander/cmd/gomander/transport/domain"
-	localizationdomain "gomander/internal/localization/domain"
+	"gomander/internal/localization"
 	projectusecases "gomander/internal/project/application/usecases"
 	"gomander/internal/usecases"
 )
@@ -66,25 +66,25 @@ func (wc *WailsControllers) ExportProjectController(projectId string) (string, e
 	return wc.useCases.ExportProject.Execute(projectId)
 }
 
-func (wc *WailsControllers) ImportProjectController(blueprint ProjectBlueprint, name, workingDirectory string) error {
-	return wc.useCases.ImportProject.Execute(blueprint.toDomain(), name, workingDirectory)
+func (wc *WailsControllers) ImportProjectController(blueprint transport.ProjectBlueprint, name, workingDirectory string) error {
+	return wc.useCases.ImportProject.Execute(blueprint.ToDomain(), name, workingDirectory)
 }
 
-func (wc *WailsControllers) GetProjectToImportController() (*ProjectBlueprint, error) {
+func (wc *WailsControllers) GetProjectToImportController() (*transport.ProjectBlueprint, error) {
 	return wc.projectToImport(projectusecases.FileTypeGomander)
 }
 
-func (wc *WailsControllers) GetProjectToImportFromPackageJsonController() (*ProjectBlueprint, error) {
+func (wc *WailsControllers) GetProjectToImportFromPackageJsonController() (*transport.ProjectBlueprint, error) {
 	return wc.projectToImport(projectusecases.FileTypePackageJSON)
 }
 
-func (wc *WailsControllers) projectToImport(fileType projectusecases.FileType) (*ProjectBlueprint, error) {
+func (wc *WailsControllers) projectToImport(fileType projectusecases.FileType) (*transport.ProjectBlueprint, error) {
 	blueprint, err := wc.useCases.GetProjectToImport.Execute(fileType)
 	if err != nil || blueprint == nil {
 		return nil, err
 	}
 
-	dto := newProjectBlueprint(*blueprint)
+	dto := transport.FromBlueprint(*blueprint)
 
 	return &dto, nil
 }
@@ -181,7 +181,7 @@ func (wc *WailsControllers) InstallReleaseAndQuitController(binaryPath string) e
 
 // Localization controllers
 
-func (wc *WailsControllers) GetTranslationController(locale string) (*localizationdomain.Localization, error) {
+func (wc *WailsControllers) GetTranslationController(locale string) (*localization.Localization, error) {
 	return wc.useCases.GetTranslation.Execute(locale)
 }
 

@@ -25,6 +25,7 @@ import (
 	"gomander/internal/eventbus"
 	"gomander/internal/facade"
 	localizationusecases "gomander/internal/localization/application/usecases"
+	localizationinfrastructure "gomander/internal/localization/infrastructure"
 	"gomander/internal/logger"
 	"gomander/internal/openedproject"
 	projectusecases "gomander/internal/project/application/usecases"
@@ -211,8 +212,8 @@ func buildDeps(gormDb *gorm.DB, ctx context.Context, dialogs dialog.Dialogs, run
 	unitOfWork := unitofworkinfrastructure.NewGormUnitOfWork(gormDb, ctx)
 
 	// Initialize event handlers
-	cleanCommandGroupsOnCommandDeleted := commandgrouphandlers.NewCleanCommandGroupsOnCommandDeleted(commandGroupRepo, ee)
-	cleanCommandGroupsOnProjectDeleted := commandgrouphandlers.NewCleanCommandGroupsOnProjectDeleted(commandGroupRepo, ee)
+	cleanCommandGroupsOnCommandDeleted := commandgrouphandlers.NewCleanCommandGroupsOnCommandDeleted(unitOfWork, commandGroupRepo, ee)
+	cleanCommandGroupsOnProjectDeleted := commandgrouphandlers.NewCleanCommandGroupsOnProjectDeleted(unitOfWork, ee)
 	cleanCommandsOnProjectDeleted := handlers.NewCleanCommandOnProjectDeleted(commandRepo)
 	addCommandToGroupOnCommandDuplicated := commandgrouphandlers.NewAddCommandToGroupOnCommandDuplicated(commandRepo, commandGroupRepo)
 
@@ -228,8 +229,9 @@ func buildDeps(gormDb *gorm.DB, ctx context.Context, dialogs dialog.Dialogs, run
 	getUserConfig := configusecases.NewGetUserConfig(configRepo)
 	saveUserConfig := configusecases.NewSaveUserConfig(configRepo)
 	// Localization
-	getTranslation := localizationusecases.NewGetTranslation(localeFs)
-	getSupportedLanguages := localizationusecases.NewGetSupportedLanguages(localeFs)
+	localeFiles := localizationinfrastructure.NewLocaleFiles(localeFs)
+	getTranslation := localizationusecases.NewGetTranslation(localeFiles)
+	getSupportedLanguages := localizationusecases.NewGetSupportedLanguages(localeFiles)
 	// Projects
 	getCurrentProject := projectusecases.NewGetCurrentProject(openedProject)
 	getAvailableProjects := projectusecases.NewGetAvailableProjects(projectRepo)
@@ -252,7 +254,7 @@ func buildDeps(gormDb *gorm.DB, ctx context.Context, dialogs dialog.Dialogs, run
 	deleteCommandGroup := commandgroupusecases.NewDeleteCommandGroup(commandGroupRepo, ee)
 	removeCommandFromCommandGroup := commandgroupusecases.NewRemoveCommandFromCommandGroup(commandGroupRepo)
 	reorderCommandGroups := commandgroupusecases.NewReorderCommandGroups(openedProject, commandGroupRepo)
-	runCommandGroup := commandgroupusecases.NewRunCommandGroup(openedProject, commandGroupRepo, r)
+	runCommandGroup := commandgroupusecases.NewRunCommandGroup(openedProject, commandGroupRepo, commandRepo, r)
 	stopCommandGroup := commandgroupusecases.NewStopCommandGroup(commandGroupRepo, r)
 	// Commands
 	getCommands := commandusecases.NewGetCommands(openedProject, commandRepo)

@@ -59,18 +59,6 @@ func (b *CommandGroupBuilder) WithCommands(commands ...domain.Command) *CommandG
 
 func (b *CommandGroupBuilder) Build() commandgroupdomain.CommandGroup {
 	return commandgroupdomain.CommandGroup{
-		Id:        b.data.Id,
-		ProjectId: b.data.ProjectId,
-		Name:      b.data.Name,
-		Commands:  b.data.Commands,
-		Position:  b.data.Position,
-	}
-}
-
-// BuildWithCommandIds is the same Command Group in the form that names the
-// Commands it holds instead of carrying them.
-func (b *CommandGroupBuilder) BuildWithCommandIds() commandgroupdomain.CommandGroupWithCommandIds {
-	return commandgroupdomain.CommandGroupWithCommandIds{
 		Id:         b.data.Id,
 		ProjectId:  b.data.ProjectId,
 		Name:       b.data.Name,

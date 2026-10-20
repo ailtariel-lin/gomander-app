@@ -9,7 +9,7 @@ import type {
 	EventData,
 	Localization,
 	Project,
-	ProjectExport,
+	ProjectBlueprint,
 	UserConfig,
 } from "@/contracts/types.ts";
 
@@ -21,13 +21,15 @@ export type InMemoryBackendState = {
 	userConfig: UserConfig;
 	runningCommandIds: string[];
 	runningGroupIds: string[];
-	projectToImport: ProjectExport;
-	importedProjects: ProjectExport[];
+	projectToImport: ProjectBlueprint;
+	packageJsonProjectToImport: ProjectBlueprint;
+	importedProjects: ProjectBlueprint[];
 	translations: Record<string, Localization>;
 	supportedLanguages: string[];
 	os: string;
 	currentRelease: string;
 	newRelease: string;
+	releaseBinaryPath: string;
 	pickedDirPath: string;
 	downloadedReleases: string[];
 	installedBinaryPath: string | null;
@@ -43,7 +45,7 @@ export type InMemoryBackend = BackendServices & {
 	emit: <E extends Event>(event: E, data: EventData[E]) => void;
 };
 
-const emptyProjectExport: ProjectExport = {
+const emptyProjectBlueprint: ProjectBlueprint = {
 	name: "",
 	workingDirectory: "",
 	commands: [],
@@ -62,13 +64,15 @@ const createState = (): InMemoryBackendState => ({
 	},
 	runningCommandIds: [],
 	runningGroupIds: [],
-	projectToImport: emptyProjectExport,
+	projectToImport: emptyProjectBlueprint,
+	packageJsonProjectToImport: emptyProjectBlueprint,
 	importedProjects: [],
 	translations: {},
 	supportedLanguages: ["en"],
 	os: "darwin",
 	currentRelease: "v1.0.0",
 	newRelease: "",
+	releaseBinaryPath: "/downloads/gomander",
 	pickedDirPath: "/picked/dir",
 	downloadedReleases: [],
 	installedBinaryPath: null,
@@ -136,20 +140,12 @@ export const createInMemoryBackend = (
 				state.commands.push(duplicate);
 
 				const group = state.commandGroups.find((g) => g.id === groupId);
-				group?.commands.push(duplicate);
+				group?.commandIds.push(duplicate.id);
 			},
 			editCommand: async (command) => {
 				state.commands = state.commands.map((c) =>
 					c.id === command.id ? snapshot(command) : c,
 				);
-				// A group carries a copy of every command it holds, so an edit shows
-				// up there too.
-				state.commandGroups = state.commandGroups.map((g) => ({
-					...g,
-					commands: g.commands.map((c) =>
-						c.id === command.id ? snapshot(command) : c,
-					),
-				}));
 			},
 			reorderCommands: async (orderedCommandIds) => {
 				state.commands = reorderBy(state.commands, orderedCommandIds);
@@ -174,7 +170,10 @@ export const createInMemoryBackend = (
 			removeCommandFromGroup: async (commandId, groupId) => {
 				state.commandGroups = state.commandGroups.map((g) =>
 					g.id === groupId
-						? { ...g, commands: g.commands.filter((c) => c.id !== commandId) }
+						? {
+								...g,
+								commandIds: g.commandIds.filter((id) => id !== commandId),
+							}
 						: g,
 				);
 			},
@@ -193,10 +192,10 @@ export const createInMemoryBackend = (
 			removeCommand: async (commandId) => {
 				state.commands = state.commands.filter((c) => c.id !== commandId);
 				// Mirrors the backend event handler that prunes deleted commands from
-				// every group they belonged to.
+				// every group that named them.
 				state.commandGroups = state.commandGroups.map((g) => ({
 					...g,
-					commands: g.commands.filter((c) => c.id !== commandId),
+					commandIds: g.commandIds.filter((id) => id !== commandId),
 				}));
 			},
 			runCommand: async (commandId) => {
@@ -243,7 +242,7 @@ export const createInMemoryBackend = (
 			},
 			getProjectToImport: async () => snapshot(state.projectToImport),
 			getProjectToImportFromPackageJson: async () =>
-				snapshot(state.projectToImport),
+				snapshot(state.packageJsonProjectToImport),
 			editProject: async (project) => {
 				state.projects = state.projects.map((p) =>
 					p.id === project.id ? snapshot(project) : p,
@@ -256,7 +255,7 @@ export const createInMemoryBackend = (
 			checkForNewRelease: async () => state.newRelease,
 			downloadRelease: async (release) => {
 				state.downloadedReleases.push(release);
-				return `/downloads/${release}`;
+				return state.releaseBinaryPath;
 			},
 			installReleaseAndQuit: async (binaryPath) => {
 				state.installedBinaryPath = binaryPath;

@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -66,7 +67,7 @@ func TestImportProject_Execute(t *testing.T) {
 			CommandGroups: array.Map(commandGroups, func(group commandgroupdomain.CommandGroup) projectdomain.BlueprintCommandGroup {
 				return projectdomain.BlueprintCommandGroup{
 					Name:       group.Name,
-					CommandIds: array.Map(group.Commands, func(cmd domain.Command) string { return cmd.Id }),
+					CommandIds: group.CommandIds,
 				}
 			}),
 		}
@@ -112,11 +113,14 @@ func TestImportProject_Execute(t *testing.T) {
 			assert.Equal(t, i, capturedCommandGroups[i].Position)
 			assert.NotEmpty(t, capturedCommandGroups[i].Id) // Random ID exists
 
-			for j, command := range expectedGroup.Commands {
-				assert.Equal(t, command.Name, capturedCommandGroups[i].Commands[j].Name)
-				assert.Equal(t, command.Command, capturedCommandGroups[i].Commands[j].Command)
-				assert.Equal(t, command.WorkingDirectory, capturedCommandGroups[i].Commands[j].WorkingDirectory)
-			}
+			// The stored Commands are new, so the Group names those rather than
+			// the ids the Blueprint carried - in the order the Blueprint held them.
+			expectedCommandIds := array.Map(expectedGroup.CommandIds, func(blueprintId string) string {
+				return capturedCommands[slices.IndexFunc(commands, func(cmd domain.Command) bool {
+					return cmd.Id == blueprintId
+				})].Id
+			})
+			assert.Equal(t, expectedCommandIds, capturedCommandGroups[i].CommandIds)
 		}
 
 		mock.AssertExpectationsForObjects(t,

@@ -76,6 +76,12 @@ release feed for the latest published one, and updates by downloading that one's
 binary and handing it to the operating system.
 _Avoid_: version (that is the number a Release is named by), update, build
 
+**Translation Catalogue**:
+The UI copy Gomander ships, one Localization per locale. A locale is supported
+because the Catalogue holds it; what the copy is stored as, and how the files
+that carry it are named, is the adapter's business and nobody else's.
+_Avoid_: i18n bundle, locale files (that is one adapter's storage), strings
+
 **Transport DTO**:
 The shape a controller hands to the frontend, or takes from it, together with
 the mapping to and from the entity behind it. It is what the wire is allowed to
@@ -88,3 +94,10 @@ One transaction spanning several repositories: everything an operation writes
 inside it lands, or none of it does. It is what makes atomicity a property of
 the operation rather than of a single repository.
 _Avoid_: transaction (that is the database's word for the mechanism)
+
+**Action**:
+Something the user can do from the Action Palette, opened with Mod+K: a label to
+search by and what happens when it is picked. Which Actions are offered follows
+from the app's state — a running Command offers to stop it, not to run it.
+_Avoid_: command (that is the domain's shell command line), launcher (that reads as
+the Runner)

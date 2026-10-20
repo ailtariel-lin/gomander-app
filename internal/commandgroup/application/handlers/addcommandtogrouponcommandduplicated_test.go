@@ -61,7 +61,7 @@ func TestAddCommandToGroupOnCommandDuplicated(t *testing.T) {
 		duplicatedCommand := test.NewCommandBuilder().WithId("cmd-1").Build()
 
 		expectedUpdatedGroup := existingGroup
-		expectedUpdatedGroup.Commands = append(expectedUpdatedGroup.Commands, duplicatedCommand)
+		expectedUpdatedGroup.CommandIds = append(expectedUpdatedGroup.CommandIds, duplicatedCommand.Id)
 
 		mockCommandGroupRepo.On("Get", event.InsideGroupId).Return(existingGroup, nil)
 		mockCommandRepo.On("Get", event.CommandId).Return(duplicatedCommand, nil)
@@ -175,7 +175,7 @@ func TestAddCommandToGroupOnCommandDuplicated(t *testing.T) {
 		duplicatedCommand := test.NewCommandBuilder().WithId("cmd-1").Build()
 
 		expectedUpdatedGroup := existingGroup
-		expectedUpdatedGroup.Commands = append(expectedUpdatedGroup.Commands, duplicatedCommand)
+		expectedUpdatedGroup.CommandIds = append(expectedUpdatedGroup.CommandIds, duplicatedCommand.Id)
 
 		expectedError := errors.New("update error")
 
